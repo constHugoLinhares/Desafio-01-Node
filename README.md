@@ -1,6 +1,9 @@
 # Desafio-01-Node
 Desafio referente ao módulo: Fundamentos do Node.js
 
+*para rodar o projeto: npm run dev na pasta -challenge-
+
+
 ## Sobre o desafio
 
 Nesse desafio você desenvolverá uma API para realizar o CRUD de suas *tasks* (tarefas).

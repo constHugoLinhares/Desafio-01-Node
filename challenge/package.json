@@ -1,0 +1,13 @@
+{
+  "name": "desafio-01-node",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Desafio referente ao módulo: Fundamentos do Node.js",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
