@@ -1,11 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { Database } from './database.js';
 import { buildRoutePath } from './utils/build-route-path.js';
-import { parse } from 'csv';
-import { multer } from 'multer'
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-import fs from 'node:fs/promises'
+import csv from 'csv-parser';
+import fs from 'fs'
 
 const database = new Database
 
@@ -75,18 +72,30 @@ export const routes = [
         method: 'POST',
         path: buildRoutePath('/tasks/invite'),
         handler: async (req, res) => { 
-            
-            upload.single('file');
-            console.log('req.body:', req, req.file)
+            const filePath = 'C:\\Users\\Hugo\\Downloads\\Pasta1.csv'
 
-            const content = await fs.readFile(file);
+            const tasks = []
 
-            console.log('content', content);
+            fs.createReadStream(filePath)
+            .pipe(csv())
+            .on('data', (row) => {
+                console.log(row)
 
-            const records = parse(content, {bom: true});
-            
-            console.log('records',records)
-            
+                tasks.push({
+                    id: row.id,
+                    title: row.title,
+                    description: row.description,
+                })
+            })
+            .on('end', () => {
+                console.log('tasks:', tasks)
+                
+            })
+            .on('error', (error) => {
+                console.error('Erro ao ler o arquivo CSV', error.message);
+            })
+
+
             return res.writeHead(204).end()
         }
     },
@@ -95,10 +104,9 @@ export const routes = [
         path: buildRoutePath('/tasks/:id/complete'),
         handler: (req, res) => {
             const { id } = req.params
-            const completed_at = new Date(), updated_at = new Date();
+            updated_at = new Date();
 
             database.update('tasks', id, {
-                completed_at,
                 updated_at,
             })
 
