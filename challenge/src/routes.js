@@ -86,31 +86,41 @@ export const routes = [
         method: 'POST',
         path: buildRoutePath('/tasks/invite'),
         handler: async (req, res) => { 
-            const filePath = 'C:\\Users\\Hugo\\Downloads\\Pasta1.csv'
 
-            const tasks = []
+            const filePath = ""
+            
+            const tasks = {}, formattedTasks = [];
+            
+            const contentType = req.headers['content-type']
+            
+            if(contentType === 'text/csv'){
+                fs.createReadStream(filePath, { encoding: 'utf-8' })
+                .pipe(csv({
+                    separator: ';'
+                }))
+                .on('data', (row) => {
+                    console.log(row)
 
-            fs.createReadStream(filePath)
-            .pipe(csv())
-            .on('data', (row) => {
-                console.log(row)
+                    const columns = Object.keys(row)
 
-                tasks.push({
-                    id: row.id,
-                    title: row.title,
-                    description: row.description,
+                    for (const column of columns) {
+                        tasks[column] = row[column];
+                    }
+
+                    console.log(tasks);
+                    formattedTasks.push({tasks})
                 })
-            })
-            .on('end', () => {
-                console.log('tasks:', tasks)
-                
-            })
-            .on('error', (error) => {
-                console.error('Erro ao ler o arquivo CSV', error.message);
-            })
+                .on('end', () => {
+                    console.log('tasks:', formattedTasks[0])
+                })
+                .on('error', (error) => {
+                    return res.writeHead.end(JSON.stringify({ error: 'Erro ao ler o arquivo CSV', error}));
+                })
 
-
-            return res.writeHead(204).end()
+                return res.writeHead(204).end()
+            } else {
+                return res.writeHead(400).end('Arquivo CSV inválido!')
+            }
         }
     },
     {
