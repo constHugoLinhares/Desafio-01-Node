@@ -34,18 +34,22 @@ export const routes = [
             const  { title, description } = req.body
             const completed_at = null, updated_at = null;
 
-            const task = {
-                id: randomUUID(),
-                title,
-                description,
-                completed_at,
-                created_at,
-                updated_at,
-            }
+            console.log(verifyTitleAndDescription({title, description}))
+            if(verifyTitleAndDescription({title, description}) === 'valid') {
 
-            database.insert('tasks', task)
-    
-            return res.writeHead(201).end();
+                const task = {
+                    id: randomUUID(),
+                    title,
+                    description,
+                    completed_at,
+                    created_at,
+                    updated_at,
+                }
+
+                database.insert('tasks', task)
+        
+                return res.writeHead(201).end();
+            }
         }
     },
     {
@@ -56,16 +60,26 @@ export const routes = [
             const { title, description } = req.body
             const selectededValues = database.select('tasks', {id});
             const completed_at = selectededValues[0].completed_at, created_at = selectededValues[0].created_at, updated_at = new Date();
+            const tasks = database.select('tasks', {id});
+            
+            if(verifyExistingID(tasks)) {
+                if(verifyTitleAndDescription({title, description}) === 'valid') {
 
-            database.update('tasks', id, {
-                title,
-                description,
-                completed_at,
-                created_at,
-                updated_at,
-            })
-
-            return res.writeHead(204).end()
+                    database.update('tasks', id, {
+                        title,
+                        description,
+                        completed_at,
+                        created_at,
+                        updated_at,
+                    })
+    
+                    return res.writeHead(204).end()
+                } else {
+                    return res.writeHead(404).end(verifyTitleAndDescription({title, description}))
+                }
+            } else {
+                return res.writeHead(404).end('ID inexistente!')
+            }
         }
     },
     {
@@ -105,12 +119,18 @@ export const routes = [
         handler: (req, res) => {
             const { id } = req.params
             updated_at = new Date();
-
-            database.update('tasks', id, {
-                updated_at,
-            })
-
-            return res.writeHead(204).end()
+            const tasks = database.select('tasks', {id});
+            
+            if(verifyExistingID(tasks)) {
+                database.update('tasks', id, {
+                    updated_at,
+                })
+                
+                return res.writeHead(204).end()
+            } else {
+                
+                return res.writeHead(404).end('ID inexistente!')
+            }
         }
     },
     {
@@ -119,9 +139,34 @@ export const routes = [
         handler: (req, res) => {
             const { id } = req.params
 
-            database.delete('tasks', id)
+            const tasks = database.select('tasks', {id});
+            
+            if(verifyExistingID(tasks)) {
+                database.delete('tasks', id)
 
-            return res.writeHead(204).end()
+                return res.writeHead(204).end()
+            } else {
+                
+                return res.writeHead(404).end('ID inexistente!')
+            }
         }
     }
 ]
+
+const verifyExistingID = (data) => {
+    for(var prop in data){
+        if(data.hasOwnProperty(prop)) return 'existID'
+    }
+}
+
+const verifyTitleAndDescription = (data) => {
+    const { title, description } = data
+    let result = 'valid'
+
+    if(title === null || title === undefined || title === "") 
+        result = 'invalid title'
+    if(description === null || description === undefined || description === "")
+        result === 'invalid title' ? result += ' and invalid description' : result = 'invalid description'
+    
+    return result
+}
