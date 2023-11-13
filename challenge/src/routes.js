@@ -83,47 +83,6 @@ export const routes = [
         }
     },
     {
-        method: 'POST',
-        path: buildRoutePath('/tasks/invite'),
-        handler: async (req, res) => { 
-
-            const filePath = ""
-            
-            const tasks = {}, formattedTasks = [];
-            
-            const contentType = req.headers['content-type']
-            
-            if(contentType === 'text/csv'){
-                fs.createReadStream(filePath, { encoding: 'utf-8' })
-                .pipe(csv({
-                    separator: ';'
-                }))
-                .on('data', (row) => {
-                    console.log(row)
-
-                    const columns = Object.keys(row)
-
-                    for (const column of columns) {
-                        tasks[column] = row[column];
-                    }
-
-                    console.log(tasks);
-                    formattedTasks.push({tasks})
-                })
-                .on('end', () => {
-                    console.log('tasks:', formattedTasks[0])
-                })
-                .on('error', (error) => {
-                    return res.writeHead.end(JSON.stringify({ error: 'Erro ao ler o arquivo CSV', error}));
-                })
-
-                return res.writeHead(204).end()
-            } else {
-                return res.writeHead(400).end('Arquivo CSV inválido!')
-            }
-        }
-    },
-    {
         method: 'PATCH',
         path: buildRoutePath('/tasks/:id/complete'),
         handler: (req, res) => {
@@ -135,10 +94,8 @@ export const routes = [
                 database.update('tasks', id, {
                     updated_at,
                 })
-                
                 return res.writeHead(204).end()
             } else {
-                
                 return res.writeHead(404).end('ID inexistente!')
             }
         }
@@ -159,6 +116,59 @@ export const routes = [
                 
                 return res.writeHead(404).end('ID inexistente!')
             }
+        }
+    },
+    {
+        method: 'POST',
+        path: buildRoutePath('/tasks/importCsvFile'),
+        handler: async (req, res) => { 
+
+            const filePath = "C:\\Users\\Hugo\\Development\\Projects\\Desafio-01-Node\\csvFile.csv"
+            
+            const tasks = [];
+            
+            const contentType = req.headers['content-type']
+            
+            if(contentType === 'text/csv'){
+                fs.createReadStream(filePath, { encoding: 'utf-8' })
+                .pipe(csv({
+                    separator: ','
+                }))
+                .on('data', (row) => {
+                    tasks.push(row)
+                })
+                .on('end', () => {
+                    const databasePath = new URL('csvFile.json', import.meta.url)
+
+                    database.insert('csvFile', tasks, databasePath)
+                })
+                .on('error', (error) => {
+                    return res.writeHead.end(JSON.stringify({ error: 'Erro ao ler o arquivo CSV', error}));
+                })
+
+                return res.writeHead(204).end()
+            } else {
+                return res.writeHead(400).end('Arquivo CSV inválido!')
+            }
+        }
+    },
+    {
+        method: 'GET',
+        path: buildRoutePath('/tasks/getCsvFile'),
+        handler: (req, res) => {
+            const { search } = req.query
+
+            const tasks = database.select('csvFile', search ? {
+                title: search,
+                description: search,
+                completed_at: search,
+                created_at: search,
+                updated_at: search,
+            } : null)
+
+            return res
+            .setHeader('Content-type', 'application/json')
+            .end(JSON.stringify(tasks));
         }
     }
 ]

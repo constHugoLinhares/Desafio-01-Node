@@ -15,8 +15,13 @@ export class Database {
         })
     }
 
-    #persist() {
-        fs.writeFile(databasePath, JSON.stringify(this.#database))
+    #persist(dbPath) {
+        if(!dbPath) {
+            fs.writeFile(databasePath, JSON.stringify(this.#database))
+        } else {
+            console.log(dbPath, 'dbpath')
+            fs.writeFile(dbPath, JSON.stringify(this.#database))
+        }
     }
 
     select(table, search) {
@@ -33,14 +38,14 @@ export class Database {
         return data
     }
 
-    insert(table, data) {
+    insert(table, data, dbPath) {
         if (Array.isArray(this.#database[table])) {
             this.#database[table].push(data)
         } else {
             this.#database[table] = [data]
         }
 
-        this.#persist()
+        this.#persist(dbPath)
         return data;
     }
 
